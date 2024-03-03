@@ -1,0 +1,83 @@
+table Risk_Factors_Table
+	lineageTag: bcef274b-cdd2-48c0-aeec-043e2ae1ecaa
+
+	column Patient_id
+		dataType: int64
+		formatString: 0
+		lineageTag: eab86f48-be5e-45c6-86ee-709e3d33e92d
+		summarizeBy: none
+		sourceColumn: Patient_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column hypertension
+		dataType: int64
+		formatString: 0
+		lineageTag: 92b2ec75-da0b-47ce-a51a-30175b4d13e0
+		summarizeBy: sum
+		sourceColumn: hypertension
+
+		annotation SummarizationSetBy = Automatic
+
+	column heart_disease
+		dataType: int64
+		formatString: 0
+		lineageTag: 5a030adf-17d1-4df6-8760-513aea963e8e
+		summarizeBy: sum
+		sourceColumn: heart_disease
+
+		annotation SummarizationSetBy = Automatic
+
+	column avg_glucose_level
+		dataType: int64
+		formatString: 0
+		lineageTag: a82574fa-91bf-4c75-aa09-088dcb9b6a6e
+		summarizeBy: sum
+		sourceColumn: avg_glucose_level
+
+		annotation SummarizationSetBy = Automatic
+
+	column bmi
+		dataType: int64
+		formatString: 0
+		lineageTag: 1d5a5f0b-57fc-4a6c-a017-f9fce6fa4ced
+		summarizeBy: sum
+		sourceColumn: bmi
+
+		annotation SummarizationSetBy = Automatic
+
+	column smoking_status
+		dataType: string
+		lineageTag: 4d706ae7-f0c8-416f-b283-d657465e18fb
+		summarizeBy: none
+		sourceColumn: smoking_status
+
+		annotation SummarizationSetBy = Automatic
+
+	column stroke
+		dataType: int64
+		formatString: 0
+		lineageTag: 39fdb92b-bb27-469f-a868-9cb3e45bbe42
+		summarizeBy: sum
+		sourceColumn: stroke
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Risk_Factors_Table-b0a2ad4f-4917-4340-a655-dd185784e239 = m
+		mode: import
+		source =
+				let
+				    Source = Excel.Workbook(File.Contents("D:\CLASS\POWER BI\healthcare_dataset_stroke_data_v1.xlsx"), null, true),
+				    Risk_Factors_Table_DefinedName = Source{[Item="Risk_Factors_Table",Kind="DefinedName"]}[Data],
+				    #"Promoted Headers" = Table.PromoteHeaders(Risk_Factors_Table_DefinedName, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"Patient_id", Int64.Type}, {"hypertension", Int64.Type}, {"heart_disease", Int64.Type}, {"avg_glucose_level", Int64.Type}, {"bmi", Int64.Type}}),
+				    #"datatype change" = Table.ReplaceErrorValues(#"Changed Type", {{"bmi", 0}}),
+				    #"Replaced Value" = Table.ReplaceValue(#"datatype change",0,List.Average(#"datatype change"[bmi]),Replacer.ReplaceValue,{"bmi"}),
+				    bmi_whole_num = Table.TransformColumnTypes(#"Replaced Value",{{"bmi", Int64.Type}, {"stroke", Int64.Type}, {"smoking_status", type text}})
+				in
+				    bmi_whole_num
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navigation
+

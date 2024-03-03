@@ -1,0 +1,106 @@
+table General_Details_table
+	lineageTag: 0b797545-d448-4903-a6b1-3277f91ab61a
+
+	column id
+		dataType: int64
+		formatString: 0%;-0%;0%
+		lineageTag: a7035f1b-092a-4d83-98d2-4e74456ab4b0
+		summarizeBy: none
+		sourceColumn: id
+
+		annotation SummarizationSetBy = Automatic
+
+	column gender
+		dataType: string
+		lineageTag: bd866c41-ede1-488e-a024-00653da70418
+		summarizeBy: none
+		sourceColumn: gender
+
+		annotation SummarizationSetBy = Automatic
+
+	column age
+		dataType: int64
+		lineageTag: 11c20a16-817e-41cb-b46a-e78d781d235f
+		summarizeBy: sum
+		sourceColumn: age
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column ever_married
+		dataType: string
+		lineageTag: adbe3160-0283-4c2f-a19f-9638696e7d0c
+		summarizeBy: none
+		sourceColumn: ever_married
+
+		annotation SummarizationSetBy = Automatic
+
+	column work_type
+		dataType: string
+		lineageTag: 76873ae6-4138-4ab1-9cb7-75c8e990d51b
+		summarizeBy: none
+		sourceColumn: work_type
+
+		annotation SummarizationSetBy = Automatic
+
+	column Residence_type
+		dataType: string
+		lineageTag: cb5df497-69c7-4705-aee9-1a25b54312ca
+		summarizeBy: none
+		sourceColumn: Residence_type
+
+		annotation SummarizationSetBy = Automatic
+
+	column WORK_TYPE_Cleaned
+		dataType: string
+		lineageTag: 7bb57feb-4795-4979-ba90-1d61336b4d7f
+		summarizeBy: none
+		sourceColumn: WORK_TYPE_Cleaned
+
+		annotation SummarizationSetBy = Automatic
+
+	column Age_high_risk = IF(General_Details_table[age]>55,"High risk age","Low risk age")
+		dataType: string
+		lineageTag: 14a30eb1-8cab-4353-8730-d91816a007cc
+		summarizeBy: none
+		isDataTypeInferred
+
+		annotation SummarizationSetBy = Automatic
+
+	column High_risk_factor2 =
+			IF((General_Details_table[gender]=="Male") && (RELATED(Risk_Factors_Table[heart_disease])=1),
+			                    "High risk2",
+			                    "Low risk2"
+			                    )
+		dataType: string
+		lineageTag: 5155c353-67dc-4a68-a363-bf5e0238747e
+		summarizeBy: none
+		isDataTypeInferred
+
+		annotation SummarizationSetBy = Automatic
+
+	partition General_Details_table-43f92618-e372-47cd-b4ce-e3eb5d350200 = m
+		mode: import
+		source =
+				let
+				    Source = Excel.Workbook(File.Contents("D:\CLASS\POWER BI\healthcare_dataset_stroke_data_v1.xlsx"), null, true),
+				    General_Details_table_DefinedName = Source{[Item="General_Details_table",Kind="DefinedName"]}[Data],
+				    #"Promoted Headers" = Table.PromoteHeaders(General_Details_table_DefinedName, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"id", Int64.Type}, {"gender", type text}, {"age", type number}, {"ever_married", type text}, {"work_type", type text}, {"Residence_type", type text}}),
+				    Gender_null_NA = Table.ReplaceValue(#"Changed Type",null,"NA",Replacer.ReplaceValue,{"gender"}),
+				    Age_null_avgvalue = Table.ReplaceValue(Gender_null_NA,null,List.Average(#"Gender_null_NA"[age]),Replacer.ReplaceValue,{"age"}),
+				    #"Replaced Value" = Table.ReplaceValue(Age_null_avgvalue,null,"NA",Replacer.ReplaceValue,{"ever_married"}),
+				    #"Inserted Text After Delimiter" = Table.AddColumn(#"Replaced Value", "Text After Delimiter", each Text.AfterDelimiter([work_type], "-"), type text),
+				    #"Renamed Columns" = Table.RenameColumns(#"Inserted Text After Delimiter",{{"Text After Delimiter", "WORK_TYPE_Cleaned"}}),
+				    Residence_type_null_NA = Table.ReplaceValue(#"Renamed Columns",null,"NA",Replacer.ReplaceValue,{"WORK_TYPE_Cleaned"}),
+				    work_type_cleaned_null_NA = Table.ReplaceValue(Residence_type_null_NA,null,"NA",Replacer.ReplaceValue,{"Residence_type"}),
+				    #"age_whole num" = Table.TransformColumnTypes(work_type_cleaned_null_NA,{{"age", Int64.Type}}),
+				    work_type_cleaned2 = Table.ReplaceValue(#"age_whole num","","NA",Replacer.ReplaceValue,{"WORK_TYPE_Cleaned"})
+				in
+				    work_type_cleaned2
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navigation
+

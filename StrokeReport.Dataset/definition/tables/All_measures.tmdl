@@ -1,0 +1,36 @@
+table All_measures
+	lineageTag: 5e7e0eb8-28be-4a87-a8d3-d34cbf1d60fc
+
+	measure Avg_age = AVERAGE(General_Details_table[age])
+		lineageTag: 06c62b28-b9a7-4472-9fba-09e370ae8978
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure Stroke_rate = SUM(Risk_Factors_Table[stroke])/COUNT(Risk_Factors_Table[stroke])
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 9e2734a2-1d7b-4772-87a3-60421488f563
+
+	measure Percent_of_total = COUNT(General_Details_table[id])/COUNTROWS(ALL(General_Details_table))
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 50c52551-9874-49cf-b264-46de9ab14259
+
+	measure Hear_disrate = SUM(Risk_Factors_Table[heart_disease])/COUNT(Risk_Factors_Table[heart_disease])
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: e7ccf543-9cb0-4c39-8d32-43614c3a92f7
+
+	measure BP_Rate = SUM(Risk_Factors_Table[hypertension])/COUNT(Risk_Factors_Table[hypertension])
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: 1cb65b51-e975-47ab-b529-9e75d9b1fc11
+
+	partition All_measures = m
+		mode: import
+		source =
+				let
+				    Source = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("i44FAA==", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Column1 = _t]),
+				    #"Changed Type" = Table.TransformColumnTypes(Source,{{"Column1", type text}}),
+				    #"Removed Columns" = Table.RemoveColumns(#"Changed Type",{"Column1"})
+				in
+				    #"Removed Columns"
+
+	annotation PBI_ResultType = Table
+
